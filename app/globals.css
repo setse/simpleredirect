@@ -1,20 +1,49 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
+@font-face {
+  font-family: 'Titillium';
+  src: url('/font/Font%20titillium/Titillium-Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Titillium';
+  src: url('/font/Font%20titillium/Titillium-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Titillium';
+  src: url('/font/Font%20titillium/Titillium-Semibold.otf') format('opentype');
+  font-weight: 600;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Titillium';
+  src: url('/font/Font%20titillium/Titillium-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Titillium';
+  src: url('/font/Font%20titillium/Titillium-Black.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+}
 
 :root {
   /* Color palette */
-  --bg-primary: #050508;
-  --bg-secondary: #0d0d12;
-  --bg-card: #111118;
-  --bg-card-hover: #16161f;
-  --bg-input: #0a0a10;
-  --border-subtle: #1e1e2a;
-  --border-active: #3b3bff;
-  --text-primary: #e8e8ef;
-  --text-secondary: #8888a0;
-  --text-muted: #555566;
-  --accent: #5555ff;
-  --accent-hover: #6b6bff;
-  --accent-glow: rgba(85, 85, 255, 0.15);
+  --bg-primary: #1f1300;
+  --bg-secondary: #31393c;
+  --bg-card: #31393c;
+  --bg-card-hover: #414a4d;
+  --bg-input: #1f1300;
+  --border-subtle: #414a4d;
+  --border-active: #ff6000;
+  --text-primary: #fff8f0;
+  --text-secondary: #e7e7e7;
+  --text-muted: #a0a0a0;
+  --accent: #ff6000;
+  --accent-hover: #ff7b29;
+  --accent-glow: rgba(255, 96, 0, 0.15);
   --success: #22c55e;
   --success-bg: rgba(34, 197, 94, 0.1);
   --danger: #ef4444;
@@ -41,7 +70,7 @@ html {
 }
 
 body {
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, system-ui,
+  font-family: "Titillium", -apple-system, BlinkMacSystemFont, system-ui,
     sans-serif;
   background: var(--bg-primary);
   color: var(--text-primary);
