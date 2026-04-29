@@ -328,7 +328,7 @@ export default function Dashboard() {
                 }}
               />
               <div className="input-hint">
-                Leave empty and save to deactivate this QR code.
+                https:// will be added automatically if omitted. Leave empty to deactivate.
               </div>
             </div>
 

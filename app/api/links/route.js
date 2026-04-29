@@ -36,10 +36,17 @@ export async function PUT(request) {
       );
     }
 
+    let processedUrl = url?.trim() || "";
+
+    // Automatically add https:// if protocol is missing
+    if (processedUrl !== "" && !/^https?:\/\//i.test(processedUrl)) {
+      processedUrl = `https://${processedUrl}`;
+    }
+
     // Basic URL validation
-    if (url && url.trim() !== "") {
+    if (processedUrl !== "") {
       try {
-        new URL(url);
+        new URL(processedUrl);
       } catch {
         return NextResponse.json(
           { error: "Invalid URL format" },
@@ -48,7 +55,7 @@ export async function PUT(request) {
       }
     }
 
-    const saved = await setLink(id, url);
+    const saved = await setLink(id, processedUrl);
     return NextResponse.json({ id, url: saved });
   } catch (err) {
     return NextResponse.json(
