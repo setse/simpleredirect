@@ -12,4 +12,15 @@
     <path id="cell-9" d="M228.8387,2424.876 L620.5911,2498.8586 A7.7632313,7.7632313 0 0 0 626.8163,2497.3438 L833.01263,2335.9727 A15.526463,15.526463 0 0 0 835.6523,2314.153 L598.9091,2012.8434 A15.526463,15.526463 0 0 0 589.6056,2007.1838 L256.30627,1943.6982 A15.526463,15.526463 0 0 0 237.92276,1957.7285 L203.64459,2391.9185 A31.052925,31.052925 0 0 0 228.8387,2424.876" stroke="#ffffff" stroke-width="2" fill="rgba(135, 245, 66, 0.2)" />
     <path id="cell-11" d="M740.8832,1282.3828 L217.801,1498.8159 A7.7632313,7.7632313 0 0 0 212.8555,1505.4945 L187.58104,1853.0183 A31.052925,31.052925 0 0 0 194.86633,1875.3522 L232.72908,1920.0107 A15.526463,15.526463 0 0 0 241.66682,1925.2223 L588.86926,1991.3562 A15.526463,15.526463 0 0 0 602.7533,1987.0828 L977.0885,1612.7476 A15.526463,15.526463 0 0 0 978.5734,1592.5099 L750.0832,1284.9269 A7.7632313,7.7632313 0 0 0 740.8832,1282.3828 M768.76996,1163.0211 L579.07654,526.58545 L524.6583,526.58545 L17.663883,1229.936 A31.052925,31.052925 0 0 0 18.976686,1267.9469 L209.03426,1496.5374 A7.7632313,7.7632313 0 0 0 217.97185,1498.7476 L741.344,1282.1921 A7.8069715,7.8069715 0 0 0 745.9996,1276.6682 L769.08405,1171.0894 A16.186953,16.186953 0 0 0 768.76996,1163.0211" stroke="#ffffff" stroke-width="2" fill="rgba(135, 66, 245, 0.2)" />
   </g>
+
+  <g id="Labels" style="pointer-events: none;">
+    <text x="881.0153753846154" y="2560.6543538461538" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="white" stroke="black" stroke-width="4" text-anchor="middle" dominant-baseline="middle">1</text>
+    <text x="1069.7057673333334" y="2056.2743266666666" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="white" stroke="black" stroke-width="4" text-anchor="middle" dominant-baseline="middle">2</text>
+    <text x="1878.1140615384616" y="2176.7157538461543" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="white" stroke="black" stroke-width="4" text-anchor="middle" dominant-baseline="middle">3</text>
+    <text x="1503.442044444444" y="1134.447915" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="white" stroke="black" stroke-width="4" text-anchor="middle" dominant-baseline="middle">4</text>
+    <text x="1637.7256249999998" y="1644.6867916666667" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="white" stroke="black" stroke-width="4" text-anchor="middle" dominant-baseline="middle">6</text>
+    <text x="1596.3286833333332" y="2485.82115" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="white" stroke="black" stroke-width="4" text-anchor="middle" dominant-baseline="middle">5</text>
+    <text x="478.19436818181816" y="2255.404772727273" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="white" stroke="black" stroke-width="4" text-anchor="middle" dominant-baseline="middle">9</text>
+    <text x="501.16595495833326" y="1425.5680666666665" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="white" stroke="black" stroke-width="4" text-anchor="middle" dominant-baseline="middle">11</text>
+  </g>
 </svg>

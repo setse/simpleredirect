@@ -4,6 +4,17 @@ import { useState, useEffect, useCallback } from "react";
 
 const TOTAL_CODES = 20;
 
+const SPECIAL_CELLS = {
+  v2: [4],
+  v3: [2],
+  v4: [2]
+};
+
+const isSpecial = (vId, cId) => {
+  const specialList = SPECIAL_CELLS[vId] || [];
+  return specialList.includes(parseInt(cId));
+};
+
 export default function Dashboard() {
   const [password, setPassword] = useState("");
   const [authenticated, setAuthenticated] = useState(false);
@@ -17,12 +28,16 @@ export default function Dashboard() {
   const [saving, setSaving] = useState(false);
 
   // Voronoi Upload States
-  const [activeTab, setActiveTab] = useState("redirects"); // "redirects" or "voronoi"
-  const [voronoiUploadId, setVoronoiUploadId] = useState("v1");
+  const [activeTab, setActiveTab] = useState("voronoi"); // "redirects" or "voronoi"
+  const [voronoiUploadId, setVoronoiUploadId] = useState("v2");
   const [voronoiCellId, setVoronoiCellId] = useState("1");
   const [voronoiCellName, setVoronoiCellName] = useState("");
+  const [voronoiCellAuthor, setVoronoiCellAuthor] = useState("");
+  const [voronoiRedirectUrl, setVoronoiRedirectUrl] = useState("");
   const [voronoiFile, setVoronoiFile] = useState(null);
   const [uploadingPdf, setUploadingPdf] = useState(false);
+  const [miniMapSvg, setMiniMapSvg] = useState(null);
+  const [availableCellIds, setAvailableCellIds] = useState([1, 2, 3, 4, 5]);
   // ── Toast helper ──────────────────────────
   const showToast = useCallback((message, type = "success") => {
     const id = Date.now();
@@ -40,11 +55,13 @@ export default function Dashboard() {
       if (res.ok) {
         const data = await res.json();
         setVoronoiCells(data.cells || {});
+      } else {
+        throw new Error("Failed to load cell data");
       }
     } catch (err) {
-      console.error("Failed to fetch voronoi cells:", err);
+      showToast("Sync Error: " + err.message, "error");
     }
-  }, []);
+  }, [showToast]);
 
   // ── Fetch links from API ──────────────────
   const fetchLinks = useCallback(async () => {
@@ -90,6 +107,21 @@ export default function Dashboard() {
       setLoading(false);
     }
   }, [password]);
+
+  // Manually highlight active cell in preview since it's injected via innerHTML
+  useEffect(() => {
+    const container = document.querySelector(".preview-scope");
+    if (!container) return;
+    
+    container.querySelectorAll("[id^='cell-'], [data-cell]").forEach(el => {
+      el.setAttribute("data-active", "false");
+    });
+    
+    const active = container.querySelector(`#cell-${voronoiCellId}, [data-cell="${voronoiCellId}"]`);
+    if (active) {
+      active.setAttribute("data-active", "true");
+    }
+  }, [voronoiCellId, miniMapSvg]);
 
   // Auto-login if password is saved
   useEffect(() => {
@@ -186,8 +218,8 @@ export default function Dashboard() {
   // ── Upload/Update Voronoi PDF ──────────────────────
   const handleUploadPdf = async (e) => {
     e.preventDefault();
-    if (!voronoiCellName && !voronoiFile) {
-      showToast("Please provide a name or select a file", "error");
+    if (!voronoiCellName && !voronoiFile && !voronoiRedirectUrl) {
+      showToast("Please provide a name, redirect URL, or select a file", "error");
       return;
     }
 
@@ -197,6 +229,8 @@ export default function Dashboard() {
     formData.append("voronoiId", voronoiUploadId);
     formData.append("cellId", voronoiCellId);
     formData.append("cellName", voronoiCellName);
+    formData.append("cellAuthor", voronoiCellAuthor);
+    formData.append("redirectUrl", voronoiRedirectUrl);
 
     try {
       const res = await fetch("/api/voronoi-pdf", {
@@ -210,8 +244,10 @@ export default function Dashboard() {
         throw new Error(err.error || "Upload failed");
       }
 
-      showToast(voronoiFile ? `PDF & Name updated for ${voronoiUploadId}` : `Name updated for Cell ${voronoiCellId}`);
+      showToast(voronoiFile ? "PDF & Details saved!" : "Cell details updated!");
       setVoronoiFile(null);
+      // Re-fetch to ensure local state is perfect
+      await fetchVoronoiCells(voronoiUploadId);
       // Reset file input visually
       const fileInput = document.getElementById("voronoi-file-input");
       if (fileInput) fileInput.value = "";
@@ -225,12 +261,46 @@ export default function Dashboard() {
     }
   };
 
+  const handleResetCell = async () => {
+    if (!confirm(`Are you sure you want to reset Cell ${voronoiCellId} in ${voronoiUploadId.toUpperCase()}? This will delete the name and PDF.`)) {
+      return;
+    }
+
+    setUploadingPdf(true);
+    try {
+      const res = await fetch(`/api/voronoi-pdf?voronoiId=${voronoiUploadId}&cellId=${voronoiCellId}`, {
+        method: "DELETE",
+        headers: { "x-admin-password": password },
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Reset failed");
+      }
+
+      showToast(`Cell ${voronoiCellId} has been reset.`);
+      setVoronoiCellName("");
+      setVoronoiCellAuthor("");
+      setVoronoiRedirectUrl("");
+      setVoronoiFile(null);
+      await fetchVoronoiCells(voronoiUploadId);
+    } catch (err) {
+      showToast(err.message, "error");
+    } finally {
+      setUploadingPdf(false);
+    }
+  };
+
   // Pre-fill cell name when cell ID changes
   useEffect(() => {
     if (voronoiCells[voronoiCellId]) {
       setVoronoiCellName(voronoiCells[voronoiCellId].name || "");
+      setVoronoiCellAuthor(voronoiCells[voronoiCellId].author || "");
+      setVoronoiRedirectUrl(voronoiCells[voronoiCellId].redirectUrl || "");
     } else {
       setVoronoiCellName("");
+      setVoronoiCellAuthor("");
+      setVoronoiRedirectUrl("");
     }
   }, [voronoiCellId, voronoiCells]);
 
@@ -251,8 +321,7 @@ export default function Dashboard() {
     }
   }, []);
 
-  // Mini-map SVG content
-  const [miniMapSvg, setMiniMapSvg] = useState(null);
+  // ── Handle Deep Links ────────────────────
 
   useEffect(() => {
     if (activeTab === "voronoi") {
@@ -262,13 +331,40 @@ export default function Dashboard() {
         .then(text => {
           if (text.includes("<svg")) {
             setMiniMapSvg(text);
+            
+            // Extract cell IDs from SVG
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(text, "image/svg+xml");
+            const cellElements = doc.querySelectorAll("[id^='cell-'], [data-cell]");
+            const ids = Array.from(cellElements).map(el => {
+              const idStr = el.id?.replace("cell-", "") || el.getAttribute("data-cell");
+              return parseInt(idStr);
+            }).filter(id => !isNaN(id));
+            
+            if (ids.length > 0) {
+              setAvailableCellIds([...new Set(ids)].sort((a, b) => a - b));
+            }
           } else {
             setMiniMapSvg(null);
+            setAvailableCellIds([1, 2, 3, 4, 5]);
           }
         })
-        .catch(() => setMiniMapSvg(null));
+        .catch(() => {
+          setMiniMapSvg(null);
+          setAvailableCellIds([1, 2, 3, 4, 5]);
+        });
     }
   }, [activeTab, voronoiUploadId, fetchVoronoiCells]);
+
+  // Sync cell selection when available IDs change
+  useEffect(() => {
+    if (availableCellIds.length > 0) {
+      const currentIdNum = parseInt(voronoiCellId);
+      if (!availableCellIds.includes(currentIdNum)) {
+        setVoronoiCellId(availableCellIds[0].toString());
+      }
+    }
+  }, [availableCellIds, voronoiCellId]);
 
   // Colorize mini-map cells
   useEffect(() => {
@@ -280,14 +376,13 @@ export default function Dashboard() {
         if (!svg) return;
         
         for (let i = 1; i <= 20; i++) {
-          const cell = svg.querySelector(`#cell-${i}`) || svg.querySelector(`[data-cell="${i}"]`);
-          if (cell) {
+          const cells = svg.querySelectorAll(`#cell-${i}, [data-cell="${i}"]`);
+          cells.forEach(cell => {
             cell.style.fill = voronoiCells[i] ? "var(--accent)" : "rgba(255,255,255,0.05)";
             cell.style.stroke = voronoiCellId === i.toString() ? "var(--accent)" : "rgba(255,255,255,0.2)";
-            cell.style.strokeWidth = voronoiCellId === i.toString() ? "3" : "1";
-            cell.style.cursor = "pointer";
-            cell.style.transition = "all 0.2s";
-          }
+            cell.style.strokeWidth = voronoiCellId === i.toString() ? "3px" : "1px";
+            cell.style.opacity = (voronoiCellId === i.toString() || !voronoiCellId) ? "1" : "0.7";
+          });
         }
       }, 100);
       return () => clearTimeout(timer);
@@ -331,11 +426,11 @@ export default function Dashboard() {
     <div className="dashboard">
       {/* Header */}
       <header className="dashboard-header">
-        <div className="dashboard-title">
-          <div className="dashboard-title-icon" style={{ background: 'var(--accent)' }}>📱</div>
+        <div className="dashboard-title" style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+          <img src="/DDU Logo.svg" alt="DDU Logo" style={{ height: "45px" }} />
           <div>
-            <h1>SimpleRedirect</h1>
-            <p>Manage your {TOTAL_CODES} dynamic QR codes</p>
+            <h1 style={{ fontSize: "1.6rem", fontWeight: "800", letterSpacing: "-0.5px" }}>DDU Aggregations</h1>
+            <p style={{ color: "var(--text-secondary)", fontSize: "0.8rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "2px" }}>State of the Art Workshop</p>
           </div>
         </div>
         <div className="header-actions">
@@ -355,8 +450,8 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* Tab Switcher */}
-      <div className="tab-switcher" style={{ display: "flex", gap: "1rem", marginBottom: "2.5rem", borderBottom: "1px solid var(--border-subtle)", paddingBottom: "1rem" }}>
+      {/* Tab Switcher (Redirects hidden) */}
+      <div className="tab-switcher" style={{ display: "none", gap: "1rem", marginBottom: "2.5rem", borderBottom: "1px solid var(--border-subtle)", paddingBottom: "1rem" }}>
         <button 
           className={`btn ${activeTab === "redirects" ? "btn-primary" : "btn-ghost"}`}
           onClick={() => setActiveTab("redirects")}
@@ -371,106 +466,37 @@ export default function Dashboard() {
         </button>
       </div>
 
-      {activeTab === "redirects" ? (
-        <>
-          {/* Stats */}
-          <div className="stats-bar">
-            <div className="stat-card">
-              <div className="stat-label">Total QR Codes</div>
-              <div className="stat-value accent">{TOTAL_CODES}</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-label">Active Links</div>
-              <div className="stat-value success">{activeCount}</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-label">Unconfigured</div>
-              <div className="stat-value warning">{TOTAL_CODES - activeCount}</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-label">Total Scans</div>
-              <div className="stat-value">{totalScans.toLocaleString()}</div>
-            </div>
-          </div>
-
-          {/* QR Grid */}
-          <div className="qr-grid">
-            {Array.from({ length: TOTAL_CODES }, (_, i) => i + 1).map((id) => (
-              <div key={id} className="qr-card" id={`qr-card-${id}`}>
-                <div className="qr-card-header">
-                  <div className="qr-id">
-                    <span className="qr-badge">QR #{id}</span>
-                  </div>
-                  <span
-                    className={`qr-status ${links[id] ? "active" : "inactive"}`}
-                  >
-                    {links[id] ? "● Active" : "○ Inactive"}
-                  </span>
-                </div>
-
-                <div className="qr-image-container">
-                  <img
-                    className="qr-image"
-                    src={`/api/qr/${id}`}
-                    alt={`QR Code #${id}`}
-                    loading="lazy"
-                  />
-                </div>
-
-                <div className="qr-url-section">
-                  <div className="qr-url-label">Destination URL</div>
-                  <div
-                    className={`qr-url-display ${!links[id] ? "empty" : ""}`}
-                    title={links[id] || ""}
-                  >
-                    {links[id] || "No destination set"}
-                  </div>
-                </div>
-
-                <div className="qr-scan-count">
-                  📊 {(scans[id] || 0).toLocaleString()} scan
-                  {scans[id] !== 1 ? "s" : ""}
-                </div>
-
-                <div className="qr-card-actions">
-                  <button
-                    className="btn btn-primary btn-sm"
-                    onClick={() => {
-                      setEditingId(id);
-                      setEditUrl(links[id] || "");
-                    }}
-                  >
-                    ✏️ Edit
-                  </button>
-                  <button
-                    className="btn btn-ghost btn-sm"
-                    onClick={() => handleDownload(id)}
-                  >
-                    ⬇ Download
-                  </button>
-                  {links[id] && (
-                    <button
-                      className="btn btn-danger btn-sm btn-icon"
-                      onClick={() => handleClearLink(id)}
-                      title="Clear link"
-                    >
-                      ✕
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
-      ) : (
+      {activeTab === "redirects" ? null : (
         /* Voronoi Management Section */
         <div className="voronoi-management-container" style={{ 
           display: "flex", 
           flexDirection: "column",
           gap: "2rem", 
-          maxWidth: "1000px", 
+          maxWidth: "1100px", 
           margin: "0 auto",
+          width: "100%"
         }}>
+          {/* Global Pattern Switcher */}
+          <div className="island-quick-switcher" style={{ 
+            display: "flex", 
+            justifyContent: "center", 
+            gap: "1rem", 
+            padding: "1rem",
+            background: "var(--bg-card)",
+            borderRadius: "var(--radius-lg)",
+            border: "1px solid var(--border-subtle)"
+          }}>
+            {["v2", "v3", "v4"].map(vId => (
+              <button 
+                key={vId}
+                className={`btn ${voronoiUploadId === vId ? "btn-primary" : "btn-ghost"}`}
+                onClick={() => setVoronoiUploadId(vId)}
+                style={{ minWidth: "120px", textTransform: "uppercase", fontWeight: "700", letterSpacing: "1px" }}
+              >
+                Island {vId.toUpperCase()}
+              </button>
+            ))}
+          </div>
           {/* Map & Status Header (Moved to Top) */}
           <div className="voronoi-status-top" style={{ 
             display: "grid", 
@@ -504,7 +530,7 @@ export default function Dashboard() {
               }}>
                 {miniMapSvg ? (
                   <div 
-                    className="mini-map-svg-container"
+                    className="mini-map-svg-container preview-scope"
                     dangerouslySetInnerHTML={{ __html: miniMapSvg }}
                     style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
                     onClick={(e) => {
@@ -538,7 +564,7 @@ export default function Dashboard() {
             }}>
               <h3 style={{ fontSize: "1.1rem", fontWeight: "700", marginBottom: "1.5rem" }}>Cell Configuration</h3>
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", overflowY: "auto", paddingRight: "0.5rem" }}>
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].map(id => (
+                {availableCellIds.map(id => (
                   <div 
                     key={id} 
                     onClick={() => setVoronoiCellId(id.toString())}
@@ -546,12 +572,13 @@ export default function Dashboard() {
                       display: "flex", 
                       alignItems: "center", 
                       gap: "0.75rem", 
-                      padding: "0.6rem 1rem", 
+                      padding: "0.8rem 1rem", 
                       borderRadius: "var(--radius-sm)",
-                      background: voronoiCellId === id.toString() ? "var(--bg-card-hover)" : "transparent",
+                      background: voronoiCellId === id.toString() ? "rgba(255, 96, 0, 0.15)" : "transparent",
                       cursor: "pointer",
                       fontSize: "0.85rem",
                       border: voronoiCellId === id.toString() ? "1px solid var(--accent)" : "1px solid transparent",
+                      boxShadow: voronoiCellId === id.toString() ? "0 4px 12px rgba(0,0,0,0.2)" : "none",
                       transition: "all 0.2s"
                     }}
                   >
@@ -564,13 +591,14 @@ export default function Dashboard() {
                     }} />
                     <span style={{ fontWeight: "700", minWidth: "20px" }}>{id}</span>
                     <span style={{ 
-                      color: voronoiCells[id] ? "var(--text-primary)" : "var(--text-muted)",
-                      fontWeight: voronoiCells[id] ? "600" : "400",
+                      color: isSpecial(voronoiUploadId, id) ? "var(--accent)" : (voronoiCells[id] ? "var(--text-primary)" : "var(--text-muted)"),
+                      fontWeight: (voronoiCells[id] || isSpecial(voronoiUploadId, id)) ? "600" : "400",
                       overflow: "hidden", 
                       textOverflow: "ellipsis", 
-                      whiteSpace: "nowrap" 
+                      whiteSpace: "nowrap",
+                      fontStyle: isSpecial(voronoiUploadId, id) ? "italic" : "normal"
                     }}>
-                      {voronoiCells[id]?.name || "Empty"}
+                      {isSpecial(voronoiUploadId, id) ? "Protected Branding Cell" : (voronoiCells[id]?.name || "Empty")}
                     </span>
                   </div>
                 ))}
@@ -609,7 +637,7 @@ export default function Dashboard() {
                     onChange={(e) => setVoronoiCellId(e.target.value)} 
                     style={{ width: "100%", padding: "0.85rem", borderRadius: "var(--radius-sm)", background: "var(--bg-input)", color: "var(--text-primary)", border: "1px solid var(--border-subtle)", outline: "none" }}
                   >
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20].map(n => (
+                    {availableCellIds.map(n => (
                       <option key={n} value={n.toString()}>
                         {voronoiCells[n] ? "🟢" : "⚪"} Cell {n} {voronoiCells[n] ? `(${voronoiCells[n].name})` : ""}
                       </option>
@@ -618,37 +646,90 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="input-group">
-                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "var(--text-secondary)", marginBottom: "0.5rem", textTransform: "uppercase", letterSpacing: "0.06em" }}>Display Name</label>
-                <input 
-                  id="voronoi-cell-name-input"
-                  type="text"
-                  placeholder="e.g., Ground Floor Plan..."
-                  value={voronoiCellName}
-                  onChange={(e) => setVoronoiCellName(e.target.value)}
-                  style={{ width: "100%", padding: "0.85rem", borderRadius: "var(--radius-sm)", background: "var(--bg-input)", color: "var(--text-primary)", border: "1px solid var(--border-subtle)", outline: "none" }}
-                />
-              </div>
+              {isSpecial(voronoiUploadId, voronoiCellId) ? (
+                <div style={{ padding: "1.5rem", background: "rgba(255, 96, 0, 0.1)", border: "1px solid var(--accent)", borderRadius: "var(--radius-sm)", color: "var(--accent)", fontWeight: "600", textAlign: "center" }}>
+                  ⚠️ This is a protected branding cell and cannot be edited.
+                </div>
+              ) : (
+                <>
+                  <div className="input-group">
+                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "var(--text-secondary)", marginBottom: "0.5rem", textTransform: "uppercase", letterSpacing: "0.06em" }}>Display Name</label>
+                    <input 
+                      id="voronoi-cell-name-input"
+                      type="text"
+                      placeholder="e.g., Ground Floor Plan..."
+                      value={voronoiCellName}
+                      onChange={(e) => setVoronoiCellName(e.target.value)}
+                      style={{ width: "100%", padding: "0.85rem", borderRadius: "var(--radius-sm)", background: "var(--bg-input)", color: "var(--text-primary)", border: "1px solid var(--border-subtle)", outline: "none" }}
+                    />
+                  </div>
 
-              <div className="input-group">
-                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "var(--text-secondary)", marginBottom: "0.5rem", textTransform: "uppercase", letterSpacing: "0.06em" }}>Document (PDF)</label>
-                <input 
-                  id="voronoi-file-input"
-                  type="file" 
-                  accept="application/pdf" 
-                  onChange={(e) => setVoronoiFile(e.target.files[0])}
-                  style={{ width: "100%", padding: "0.85rem", borderRadius: "var(--radius-sm)", background: "var(--bg-input)", border: "1px solid var(--border-subtle)", color: "var(--text-primary)" }}
-                />
-                {voronoiCells[voronoiCellId] && (
-                  <p style={{ fontSize: "0.75rem", color: "var(--success)", marginTop: "0.5rem" }}>
-                    ✓ Existing document linked. Leave empty to keep it.
-                  </p>
-                )}
-              </div>
+                  <div className="input-group">
+                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "var(--text-secondary)", marginBottom: "0.5rem", textTransform: "uppercase", letterSpacing: "0.06em" }}>Author Name</label>
+                    <input 
+                      id="voronoi-cell-author-input"
+                      type="text"
+                      placeholder="e.g., John Doe..."
+                      value={voronoiCellAuthor}
+                      onChange={(e) => setVoronoiCellAuthor(e.target.value)}
+                      style={{ width: "100%", padding: "0.85rem", borderRadius: "var(--radius-sm)", background: "var(--bg-input)", color: "var(--text-primary)", border: "1px solid var(--border-subtle)", outline: "none" }}
+                    />
+                  </div>
 
-              <button type="submit" className="btn btn-primary btn-lg" disabled={uploadingPdf} style={{ padding: "1.1rem", marginTop: "1rem", fontSize: "1rem" }}>
-                {uploadingPdf ? "Saving..." : voronoiFile ? "🚀 Upload PDF & Save" : "💾 Save Name Only"}
-              </button>
+                  <div className="input-group">
+                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "var(--text-secondary)", marginBottom: "0.5rem", textTransform: "uppercase", letterSpacing: "0.06em" }}>Redirect URL (Webpage)</label>
+                    <input 
+                      id="voronoi-redirect-url-input"
+                      type="url"
+                      placeholder="https://example.com"
+                      value={voronoiRedirectUrl}
+                      onChange={(e) => setVoronoiRedirectUrl(e.target.value)}
+                      style={{ width: "100%", padding: "0.85rem", borderRadius: "var(--radius-sm)", background: "var(--bg-input)", color: "var(--text-primary)", border: "1px solid var(--border-subtle)", outline: "none" }}
+                    />
+                    {voronoiCells[voronoiCellId]?.redirectUrl && (
+                      <p style={{ fontSize: "0.75rem", color: "var(--success)", marginTop: "0.4rem" }}>
+                        ✓ Webpage redirect active.
+                      </p>
+                    )}
+                    <p style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginTop: "0.4rem" }}>
+                      If set, clicking the cell will redirect to this URL instead of opening a PDF preview.
+                    </p>
+                  </div>
+
+                  <div className="input-group">
+                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "var(--text-secondary)", marginBottom: "0.5rem", textTransform: "uppercase", letterSpacing: "0.06em" }}>Document (PDF)</label>
+                    <input 
+                      id="voronoi-file-input"
+                      type="file" 
+                      accept="application/pdf" 
+                      onChange={(e) => setVoronoiFile(e.target.files[0])}
+                      style={{ width: "100%", padding: "0.85rem", borderRadius: "var(--radius-sm)", background: "var(--bg-input)", border: "1px solid var(--border-subtle)", color: "var(--text-primary)" }}
+                    />
+                    {voronoiCells[voronoiCellId]?.url && (
+                      <p style={{ fontSize: "0.75rem", color: "var(--success)", marginTop: "0.5rem" }}>
+                        ✓ Existing document linked. Leave empty to keep it.
+                      </p>
+                    )}
+                  </div>
+
+                  <div style={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
+                    <button type="submit" className="btn btn-primary btn-lg" disabled={uploadingPdf} style={{ flex: 2, padding: "1.1rem", fontSize: "1rem" }}>
+                      {uploadingPdf ? "Saving..." : voronoiFile ? "🚀 Upload PDF & Save" : "💾 Save Name Only"}
+                    </button>
+                    {voronoiCells[voronoiCellId] && (
+                      <button 
+                        type="button" 
+                        className="btn btn-danger btn-lg" 
+                        disabled={uploadingPdf} 
+                        onClick={handleResetCell}
+                        style={{ flex: 1, padding: "1.1rem", fontSize: "1rem" }}
+                      >
+                        🗑 Reset
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
             </form>
             
             <div style={{ marginTop: "3rem", paddingTop: "2rem", borderTop: "1px solid var(--border-subtle)", textAlign: "center" }}>
@@ -720,6 +801,30 @@ export default function Dashboard() {
           </div>
         ))}
       </div>
+      <style jsx global>{`
+        .preview-scope svg [id^='cell-'], 
+        .preview-scope svg [data-cell] {
+          fill: rgba(255, 255, 255, 0.1) !important;
+          stroke: rgba(255, 255, 255, 0.2) !important;
+          stroke-width: 1px !important;
+          transition: all 0.2s ease;
+          cursor: pointer;
+        }
+        .preview-scope svg [id^='cell-']:hover, 
+        .preview-scope svg [data-cell]:hover {
+          fill: var(--accent) !important;
+          stroke: white !important;
+          opacity: 1 !important;
+        }
+        /* Highlight active cell */
+        .preview-scope svg [data-active="true"] {
+          fill: var(--accent) !important;
+          stroke: white !important;
+          stroke-width: 2.5px !important;
+          opacity: 1 !important;
+          filter: drop-shadow(0 0 10px var(--accent));
+        }
+      `}</style>
     </div>
   );
 }

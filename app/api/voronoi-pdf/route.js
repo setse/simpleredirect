@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { setVoronoiCellData, setVoronoiCellFile, getVoronoiCells } from "@/lib/kv";
+import { setVoronoiCellData, setVoronoiCellFile, getVoronoiCells, hasVoronoiCellFile } from "@/lib/kv";
 
 export async function GET(req) {
   try {
@@ -30,12 +30,14 @@ export async function POST(req) {
     const voronoiId = formData.get("voronoiId");
     const cellId = formData.get("cellId");
     const cellName = formData.get("cellName") || `Cell ${cellId}`;
+    const cellAuthor = formData.get("cellAuthor") || "";
+    const redirectUrl = formData.get("redirectUrl") || "";
 
     if (!voronoiId || !cellId) {
       return NextResponse.json({ error: "Missing voronoiId or cellId" }, { status: 400 });
     }
 
-    let publicUrl = `/api/voronoi-pdf/serve/${voronoiId}/${cellId}`;
+    let publicUrl = null;
 
     if (file && file.size > 0) {
       if (file.type !== "application/pdf") {
@@ -49,20 +51,48 @@ export async function POST(req) {
 
       // Save raw file data to Upstash
       await setVoronoiCellFile(voronoiId, cellId, base64);
+      publicUrl = `/api/voronoi-pdf/serve/${voronoiId}/${cellId}`;
     } else {
-      // If no new file, try to keep existing URL if it exists in metadata
+      // If no new file, try to keep existing URL if it exists in metadata AND the file actually exists
       const cells = await getVoronoiCells(voronoiId);
       if (cells[cellId]?.url) {
-        publicUrl = cells[cellId].url;
+        const fileExists = await hasVoronoiCellFile(voronoiId, cellId);
+        if (fileExists) {
+          publicUrl = cells[cellId].url;
+        }
       }
     }
 
     // Save/Update metadata
-    await setVoronoiCellData(voronoiId, cellId, { url: publicUrl, name: cellName });
+    await setVoronoiCellData(voronoiId, cellId, { url: publicUrl, name: cellName, author: cellAuthor, redirectUrl });
 
-    return NextResponse.json({ success: true, url: publicUrl, name: cellName });
+    return NextResponse.json({ success: true, url: publicUrl, name: cellName, author: cellAuthor, redirectUrl });
   } catch (error) {
     console.error("Voronoi update error:", error);
     return NextResponse.json({ error: "Failed to update cell data" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req) {
+  try {
+    const adminPassword = req.headers.get("x-admin-password");
+    if (adminPassword !== process.env.ADMIN_PASSWORD) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const voronoiId = searchParams.get("voronoiId");
+    const cellId = searchParams.get("cellId");
+
+    if (!voronoiId || !cellId) {
+      return NextResponse.json({ error: "Missing voronoiId or cellId" }, { status: 400 });
+    }
+
+    await setVoronoiCellData(voronoiId, cellId, null);
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Voronoi reset error:", error);
+    return NextResponse.json({ error: "Failed to reset cell" }, { status: 500 });
   }
 }

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" width="2384pt" height="3370pt" viewBox="0 0 2383.92 3370.32" xmlns="http://www.w3.org/2000/svg">
+  <defs />
+    <g id="SeparatedCells">
+    <path id="cell-1" data-original="cell-1" d="M2138.1887,1304.5531 L1756.9022,1136.7869 A28.346457,28.346457 0 0 0 1718.1141,1155.3635 L1509.1221,1931.6196 A28.346457,28.346457 0 0 0 1517.929,1960.41 L1780.3102,2187.8071 A56.692913,56.692913 0 0 0 1829.1194,2200.4417 L2147.3542,2133.4448 A56.692913,56.692913 0 0 0 2186.7554,2102.5623 L2349.2803,1765.0104 A56.692913,56.692913 0 0 0 2349.3857,1716.0419 L2166.5422,1332.0708 A56.692913,56.692913 0 0 0 2138.189,1304.5531" stroke="#ffffff" stroke-width="2" fill="rgba(255, 96, 0, 0.15)" />
+    <path id="cell-2" data-original="cell-2" d="M488.17755,675.6727 L29.02716,663.26324 L29.02716,1974.8091 L556.2825,1937.1481 A28.346457,28.346457 0 0 0 581.55066,1916.5483 L781.2131,1206.6375 A28.346457,28.346457 0 0 0 778.8836,1185.5237 L512.36993,690.5698 A28.346457,28.346457 0 0 0 488.17755,675.6727" stroke="#ffffff" stroke-width="2" fill="rgba(255, 96, 0, 0.15)" />
+    <path id="cell-3" data-original="cell-3" d="M557.80426,1976.8257 L29.02716,2014.5953 L29.02716,3168.8528 L1005.55,3168.8528 L586.51886,1995.566 A28.346457,28.346457 0 0 0 557.80426,1976.8256" stroke="#ffffff" stroke-width="2" fill="rgba(255, 96, 0, 0.15)" />
+    <path id="cell-4" data-original="cell-4" d="M703.4289,1898.9316 L1416.9379,1898.9316 A28.346457,28.346457 0 0 0 1444.3097,1877.9546 L1650.528,1112.0009 A28.346457,28.346457 0 0 0 1648.6462,1092.231 L1632.776,1059.6088 A28.346457,28.346457 0 0 0 1600.1306,1044.5808 L867.0902,1235.8087 A28.346457,28.346457 0 0 0 846.95776,1255.5626 L676.1412,1862.9106 A28.346457,28.346457 0 0 0 703.4289,1898.9318" stroke="#ffffff" stroke-width="2" fill="rgba(255, 96, 0, 0.15)" />
+    <path id="cell-5" data-original="cell-5" d="M554.4486,644.7696 L927.74023,239.01796 A56.692913,56.692913 0 0 1 962.59937,221.12627 L1120.3864,201.88396 A56.692913,56.692913 0 0 1 1164.914,215.78714 L1507.2816,520.1139 A56.692913,56.692913 0 0 1 1523.8352,545.92 L1639.0155,922.874 L1637.3618,937.09576 A28.346457,28.346457 0 0 1 1616.3604,961.25024 L837.2188,1164.5045 A28.346457,28.346457 0 0 1 805.1053,1150.515 L550.35144,677.4008 A28.346457,28.346457 0 0 1 554.44867,644.76965" stroke="#ffffff" stroke-width="2" fill="rgba(255, 96, 0, 0.15)" />
+    <path id="cell-6" data-original="cell-6" d="M1464.134,1975.4672 L661.70447,1975.4672 A28.346457,28.346457 0 0 0 635.00946,2013.3475 L1047.69,3168.8528 L1554.1917,3168.8528 L1766.1111,2268.195 A56.692913,56.692913 0 0 0 1748.0552,2212.368 L1482.699,1982.3925 A28.346457,28.346457 0 0 0 1464.134,1975.4672" stroke="#ffffff" stroke-width="2" fill="rgba(255, 96, 0, 0.15)" />
+  </g>
+  <g id="Labels" style="pointer-events: none;">
+    <text x="1968.2455769230764" y="1710.0511692307696" font-family="Arial, sans-serif" font-size="100" font-weight="bold" fill="white" stroke="black" stroke-width="3" text-anchor="middle" dominant-baseline="middle">1</text>
+    <text x="1968.2455769230764" y="1770.0511692307696" font-family="Arial, sans-serif" font-size="30" fill="#ff6000" text-anchor="middle" dominant-baseline="middle">cell-1</text>
+    <text x="471.6343566666667" y="1213.9827933333333" font-family="Arial, sans-serif" font-size="100" font-weight="bold" fill="white" stroke="black" stroke-width="3" text-anchor="middle" dominant-baseline="middle">2</text>
+    <text x="471.6343566666667" y="1273.9827933333333" font-family="Arial, sans-serif" font-size="30" fill="#ff6000" text-anchor="middle" dominant-baseline="middle">cell-2</text>
+    <text x="460.9552833333333" y="2383.586366666667" font-family="Arial, sans-serif" font-size="100" font-weight="bold" fill="white" stroke="black" stroke-width="3" text-anchor="middle" dominant-baseline="middle">3</text>
+    <text x="460.9552833333333" y="2443.586366666667" font-family="Arial, sans-serif" font-size="30" fill="#ff6000" text-anchor="middle" dominant-baseline="middle">cell-3</text>
+    <text x="1199.1250327272728" y="1476.1320909090907" font-family="Arial, sans-serif" font-size="100" font-weight="bold" fill="white" stroke="black" stroke-width="3" text-anchor="middle" dominant-baseline="middle">4</text>
+    <text x="1199.1250327272728" y="1536.1320909090907" font-family="Arial, sans-serif" font-size="30" fill="#ff6000" text-anchor="middle" dominant-baseline="middle">cell-4</text>
+    <text x="1100.0762364285715" y="646.2163414285715" font-family="Arial, sans-serif" font-size="100" font-weight="bold" fill="white" stroke="black" stroke-width="3" text-anchor="middle" dominant-baseline="middle">5</text>
+    <text x="1100.0762364285715" y="706.2163414285715" font-family="Arial, sans-serif" font-size="30" fill="#ff6000" text-anchor="middle" dominant-baseline="middle">cell-5</text>
+    <text x="1313.747658888889" y="2304.4900222222223" font-family="Arial, sans-serif" font-size="100" font-weight="bold" fill="white" stroke="black" stroke-width="3" text-anchor="middle" dominant-baseline="middle">6</text>
+    <text x="1313.747658888889" y="2364.4900222222223" font-family="Arial, sans-serif" font-size="30" fill="#ff6000" text-anchor="middle" dominant-baseline="middle">cell-6</text>
+  </g>
+
+</svg>

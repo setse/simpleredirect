@@ -1,9 +1,11 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "SimpleRedirect — Dynamic QR Code Manager",
-  description:
-    "Manage 20 dynamic QR codes whose destinations can be changed at any time without regenerating the codes.",
+  title: "DDU Aggregations",
+  description: "State of the Art Workshop",
+  icons: {
+    icon: "/DDU Logo.svg",
+  },
 };
 
 export default function RootLayout({ children }) {
